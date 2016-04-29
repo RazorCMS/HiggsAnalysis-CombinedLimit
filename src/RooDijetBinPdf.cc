@@ -9,6 +9,7 @@
 
 #include "../interface/RooDijetBinPdf.h"
 #include "RooRealVar.h"
+#include "RooConstVar.h"
 #include "Math/Functor.h"
 #include "Math/WrappedFunction.h"
 #include "Math/IFunction.h"
@@ -16,8 +17,31 @@
 #include "Math/GSLIntegrator.h"
 
 using namespace std;
+using namespace RooFit;
 
 ClassImp(RooDijetBinPdf)
+//---------------------------------------------------------------------------
+RooDijetBinPdf::RooDijetBinPdf(const char *name, const char *title,
+				   RooAbsReal& _th1x,  
+				   RooAbsReal& _p1, RooAbsReal& _p2, 
+			           RooAbsReal& _p3, RooAbsReal& _sqrts,
+			           RooAbsReal& _meff, RooAbsReal& _seff) : RooAbsPdf(name, title), 
+//TH3* _Hnominal) : RooAbsPdf(name, title), 
+  th1x("th1x", "th1x Observable", this, _th1x),
+  p1("p1", "p1", this, _p1),
+  p2("p2", "p2", this, _p2),
+  p3("p3", "p3", this, _p3),
+  sqrts("sqrts", "sqrts", this, _sqrts),
+  meff("meff", "meff", this, _meff),
+  seff("seff", "seff", this, _seff),
+  xBins(0),
+  xMax(0),
+  xMin(0),
+  relTol(1E-12),
+  absTol(1E-12)
+{
+  memset(&xArray, 0, sizeof(xArray));
+}
 //---------------------------------------------------------------------------
 RooDijetBinPdf::RooDijetBinPdf(const char *name, const char *title,
 				   RooAbsReal& _th1x,  
@@ -29,6 +53,8 @@ RooDijetBinPdf::RooDijetBinPdf(const char *name, const char *title,
   p2("p2", "p2", this, _p2),
   p3("p3", "p3", this, _p3),
   sqrts("sqrts", "sqrts", this, _sqrts),
+  meff("meff", "meff", this, RooConst(-1) ),
+  seff("seff", "seff", this, RooConst(-1) ),
   xBins(0),
   xMax(0),
   xMin(0),
@@ -45,6 +71,8 @@ RooDijetBinPdf::RooDijetBinPdf(const RooDijetBinPdf& other, const char* name) :
    p2("p2", this, other.p2),
    p3("p3", this, other.p3),
    sqrts("sqrts", this, other.sqrts),
+   meff("meff", this, other.meff),
+   seff("seff", this, other.seff),
    xBins(other.xBins),
    xMax(other.xMax),
    xMin(other.xMin),
@@ -92,10 +120,12 @@ Double_t RooDijetBinPdf::evaluate() const
     
   // define the function to be integrated numerically
   DijetFunction func;
-  double params[4];
+  double params[6];
   params[0] = sqrts;    params[1] = p1;
   params[2] = p2;       params[3] = p3;
+  params[4] = meff;     params[5] = seff;
   func.SetParameters(params);
+
   ROOT::Math::Integrator ig(ROOT::Math::IntegrationOneDim::kADAPTIVE,absTol,relTol);
   ig.SetFunction(func,false);
 
@@ -127,12 +157,15 @@ Double_t RooDijetBinPdf::analyticalIntegral(Int_t code, const char* rangeName) c
    //cout <<  "iBinMin = " << iBinMin << ",iBinMax = " << iBinMax << endl;
 
    
-   // define the function to be integrated numerically
-  DijetFunction func;
-  double params[4];
-  params[0] = sqrts;    params[1] = p1;
-  params[2] = p2;       params[3] = p3;
-  func.SetParameters(params);
+   // define the function to be integrated numerically  
+   DijetFunction func;
+   double params[6];
+   params[0] = sqrts;    params[1] = p1;
+   params[2] = p2;       params[3] = p3;
+   params[4] = meff;     params[5] = seff;
+   func.SetParameters(params);
+
+   
   ROOT::Math::Integrator ig(ROOT::Math::IntegrationOneDim::kADAPTIVE,absTol,relTol);
   ig.SetFunction(func,false);
     

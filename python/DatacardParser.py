@@ -18,7 +18,7 @@ def addDatacardParserOptions(parser):
     parser.add_option("--default-morphing",  dest="defMorph", type="string", default="shape2N", help="Default template morphing algorithm (to be used when the datacard has just 'shape')")
     parser.add_option("--no-b-only","--for-fits",    dest="noBOnly", default=False, action="store_true", help="Do not save the background-only pdf (saves time)")
     parser.add_option("--no-optimize-pdfs",    dest="noOptimizePdf", default=False, action="store_true", help="Do not save the RooSimultaneous as RooSimultaneousOpt and Gaussian constraints as SimpleGaussianConstraint")
-    parser.add_option("--optimize-simpdf-constraints",    dest="moreOptimizeSimPdf", default=False, action="store_true", help="Deeper optimization of RooSimultaneous: add the constraints only at the end (RooFit-incompatible!)")
+    parser.add_option("--optimize-simpdf-constraints",    dest="moreOptimizeSimPdf", default="none", type="string", help="Handling of constraints in simultaneous pdf: 'none' = add all constraints on all channels (default); 'lhchcg' = add constraints on only the first channel; 'cms' = add constraints to the RooSimultaneousOpt.")
     #parser.add_option("--use-HistPdf",  dest="useHistPdf", type="string", default="always", help="Use RooHistPdf for TH1s: 'always' (default), 'never', 'when-constant' (i.e. not when doing template morphing)")
     parser.add_option("--channel-masks",  dest="doMasks", default=False, action="store_true", help="Create channel-masking RooRealVars")
     parser.add_option("--use-HistPdf",  dest="useHistPdf", type="string", default="never", help="Use RooHistPdf for TH1s: 'always', 'never' (default), 'when-constant' (i.e. not when doing template morphing)")
@@ -74,6 +74,7 @@ def parseCard(file, options):
     ret = Datacard()
     ret.discretes=[]
     ret.groups={}
+ 
     #
     nbins      = -1; 
     nprocesses = -1; 
@@ -81,6 +82,10 @@ def parseCard(file, options):
     binline = []; processline = []; sigline = []
     shapesUseBin = False
     lineNumber = None
+
+    try: getattr(options,"evaluateEdits")
+    except: setattr(options,"evaluateEdits",True)
+
     try:
         for lineNumber,l in enumerate(file):
             f = l.split();
@@ -194,6 +199,10 @@ def parseCard(file, options):
                 ret.flatParamNuisances[lsyst] = True
                 #for flat parametric uncertainties, code already does the right thing as long as they are non-constant RooRealVars linked to the model
                 continue
+	    elif pdf == "extArg": 
+	        # look for additional parameters in workspaces 
+	        ret.extArgs[lsyst]=f[:]
+	    	continue 
             elif pdf == "rateParam":
 	        if f[3]=="*" and f[2]=="*": # all channels 
 		  for c in ret.processes: 
@@ -205,11 +214,11 @@ def parseCard(file, options):
 	        elif f[3]=="*": # all channels 
 		  for c in ret.processes: 
 		    f_tmp = f[:]; f_tmp[3]=c
-	            addRateParam(lsyst,f_tmp,ret)
-	        elif f[2]=="*": # all channels 
+		    addRateParam(lsyst,f_tmp,ret)
+	        elif f[2]=="*": # all bins
 		  for b in ret.bins:
 		    f_tmp = f[:]; f_tmp[2]=b
-	            addRateParam(lsyst,f_tmp,ret)
+		    addRateParam(lsyst,f_tmp,ret)
 		else : addRateParam(lsyst,f,ret)
                 continue
             elif pdf=="discrete":
@@ -218,10 +227,14 @@ def parseCard(file, options):
                 continue
             elif pdf=="edit":
                 if nuisances != -1: nuisances = -1
-                if options.verbose > 1: print "Before edit: \n\t%s\n" % ("\n\t".join( [str(x) for x in ret.systs] ))
-                if options.verbose > 1: print "Edit command: %s\n" % numbers
-                doEditNuisance(ret, numbers[0], numbers[1:])
-                if options.verbose > 1: print "After edit: \n\t%s\n" % ("\n\t".join( [str(x) for x in ret.systs] ))
+		if options.evaluateEdits :
+                  if options.verbose > 1: print "Before edit: \n\t%s\n" % ("\n\t".join( [str(x) for x in ret.systs] ))
+                  if options.verbose > 1: print "Edit command: %s\n" % numbers
+                  doEditNuisance(ret, numbers[0], numbers[1:])
+                  if options.verbose > 1: print "After edit: \n\t%s\n" % ("\n\t".join( [str(x) for x in ret.systs] ))
+		else:  
+			if numbers[0] in ["changepdf","freeze"]: ret.nuisanceEditLines.append([numbers[0],numbers[1:]])
+			else: ret.nuisanceEditLines.append([numbers[0],numbers[1],numbers[2],numbers[3:]])
                 continue
             elif pdf=="group":
                 # This is not really a pdf type, but a way to be able to name groups of nuisances together

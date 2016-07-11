@@ -7,7 +7,9 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-f", "--format",  type="string",   dest="format", default="html", help="Format for output number")
 parser.add_option("-m", "--mass",    dest="mass",     default=0,  type="float",  help="Higgs mass to use. Will also be written in the Workspace as RooRealVar 'MH'.")
+parser.add_option("-p", "--process",    dest="process",     default=None,  type="string",  help="Higgs process to use. Will also be written in the Workspace as RooRealVar 'MH'.")
 parser.add_option("-D", "--dataset", dest="dataname", default="data_obs",  type="string",  help="Name of the observed dataset")
+parser.add_option("-s", "--search", "--grep", dest="grep", default=[], action="append",  type="string",  help="Selection of nuisance parameters (regexp, can be used multiple times)")
 parser.add_option("-a", "--all", dest="all", default=False,action='store_true',  help="Report all nuisances (default is only lnN)")
 parser.add_option("", "--noshape", dest="noshape", default=False,action='store_true',  help="Counting experiment only (alternatively, build a shape analysis from combineCards.py -S card.txt > newcard.txt )")
 (options, args) = parser.parse_args()
@@ -41,6 +43,7 @@ else:
     file = open(options.fileName, "r")
 
 DC = parseCard(file, options)
+
 if not DC.hasShapes: DC.hasShapes = True
 MB = ShapeBuilder(DC, options)
 if not options.noshape: MB.prepareAllShapes()
@@ -68,8 +71,10 @@ def commonStems(list, sep="_"):
     ret.sort()
     return ret 
     
-report = {}; errlines = {}
+report = {}; errlines = {}; outParams = {}
 for (lsyst,nofloat,pdf,pdfargs,errline) in DC.systs:
+    if ("param" in pdf) or ("Param" in pdf) or ("discrete" in pdf): 
+    	 if options.all: outParams[lsyst]=[pdf,pdfargs]
     if not options.all and pdf != "lnN": continue
     if not len(errline) : continue
     types = []
@@ -83,11 +88,17 @@ for (lsyst,nofloat,pdf,pdfargs,errline) in DC.systs:
         for p in DC.exp[b].iterkeys():
             if errline[b][p] == 0: continue
             processes[p] = True
-	    if "shape" in pdf :
+	    if "shape" in pdf and MB.isShapeSystematic(b,p,lsyst):
 		vals = []
-	    	objU,objD,objC = MB.getShape(b,p,lsyst+"Up"), MB.getShape(b,p,lsyst+"Down"), MB.getShape(b,p)
+
+		systShapeName = lsyst
+		if (lsyst,b,p) in DC.systematicsShapeMap.keys(): systShapeName = DC.systematicsShapeMap[(lsyst,b,p)]
+
+	    	objU,objD,objC = MB.getShape(b,p,systShapeName+"Up"), MB.getShape(b,p,systShapeName+"Down"), MB.getShape(b,p)
+	 
 		if objC.InheritsFrom("TH1"): valU,valD,valC =  objU.Integral(), objD.Integral(), objC.Integral()
 		elif objC.InheritsFrom("RooDataHist"): valU,valD,valC =  objU.sumEntries(), objD.sumEntries(), objC.sumEntries()
+
 		if valC!=0: 
 			errlines[lsyst][b][p] = "%.3f/%.3f"%(valU/valC,valD/valC)
 			vals.append(valU/valC)
@@ -109,6 +120,11 @@ for (lsyst,nofloat,pdf,pdfargs,errline) in DC.systs:
 names = report.keys() 
 if "brief" in options.format:
     names = [ k for (k,v) in report.iteritems() if len(v["bins"]) > 1 ]
+if options.process:
+    names = [ k for k in names if any(p for p in report[k]['processes'] if re.match(options.process, p)) ]
+if options.grep:
+    names = [ n for n in names if any(p for p in options.grep if re.match(p,n)) ]
+
 # alphabetic sort
 names.sort()
 # now re-sort by category (preserving alphabetic sort inside)
@@ -157,6 +173,9 @@ function toggleChann(id) {
         print "\t<td colspan=\"5\"><table class=\"channDetails\">" 
         for x in sorted(val["bins"]): print "\t\t<tr><td>%s</td><td>%s</td></li>" % (x, ", ".join(["%s(%s)"%(k,v) for (k,v) in errlines[nuis][x].iteritems() if v != 0]))
         print "\t</table></td>"
+        print "</tr>\n"
+    for x in outParams.keys():
+        print "\t\t<tr><td><b>%s(%s)</b></td><td>%s</td></li>" % (x,  outParams[x][0] , ", ".join([a for a in outParams[x][1]]))
         print "</tr>\n"
     print """
 </table>

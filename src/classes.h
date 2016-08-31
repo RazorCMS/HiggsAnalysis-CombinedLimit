@@ -65,6 +65,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooFuncPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooModExpBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/PdfDiagonalizer.h"
 
 namespace {

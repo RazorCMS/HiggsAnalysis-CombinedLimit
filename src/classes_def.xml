@@ -198,6 +198,7 @@
 	<class name="RooDijetBinPdf" />	
 	<class name="RooDijet5ParamBinPdf" />	
 	<class name="RooModExpBinPdf" />	
+	<class name="RooAtlasBinPdf" />	
 	<class name="PdfDiagonalizer" />	
 	<class name="RooMorphingPdf" />
         <function name="function th1fmorph" />

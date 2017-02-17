@@ -197,8 +197,17 @@
 	<class name="RooParametricShapeBinPdf" />
 	<class name="RooDijetBinPdf" />	
 	<class name="RooDijet5ParamBinPdf" />	
+	<class name="RooDijet6ParamBinPdf" />	
+	<class name="RooDijet5ParamPolyExtBinPdf" />	
+	<class name="RooDijet6ParamPolyExtBinPdf" />	
+	<class name="RooDijet7ParamPolyExtBinPdf" />	
+	<class name="RooModExp3ParamBinPdf" />	
+	<class name="RooModExp4ParamBinPdf" />	
 	<class name="RooModExpBinPdf" />	
+	<class name="RooModExp6ParamBinPdf" />	
+	<class name="RooAtlas4ParamBinPdf" />	
 	<class name="RooAtlasBinPdf" />	
+	<class name="RooAtlas6ParamBinPdf" />	
 	<class name="PdfDiagonalizer" />	
 	<class name="RooMorphingPdf" />
         <function name="function th1fmorph" />

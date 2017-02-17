@@ -65,8 +65,17 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooFuncPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijetBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijet5ParamPolyExtBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijet6ParamPolyExtBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooDijet7ParamPolyExtBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooModExp3ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooModExp4ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooModExpBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooModExp6ParamBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooAtlas4ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/RooAtlasBinPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/RooAtlas6ParamBinPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/PdfDiagonalizer.h"
 
 namespace {
